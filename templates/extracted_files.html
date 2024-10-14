@@ -30,13 +30,13 @@
     <div class="container main-container">
         <h2 class="text-center"><i class="fa fa-folder"></i> {{ module_name }} 解壓縮後的檔案</h2>
         <div class="file-list list-group">
-            {% for file in files %}
-            <a href="/download/{{ dir }}/{{ file }}" class="list-group-item list-group-item-action file-item">
-                <i class="fa fa-file"></i> {{ file }}
-            </a>
-            {% endfor %}
+            <ul>
+        {% for file in files %}
+            <li><a href="{{ url_for('download_file', filename=file) }}" class="list-group-item list-group-item-action line-item">{{ file }}</a></li>
+        {% endfor %}
+    </ul>
         </div>
-        <a href="/delete/{{ dir }}" class="btn btn-danger mt-3"><i class="fas fa-trash"></i> 刪除並返回</a>
+        <a href="{{ url_for('delete_temp_files') }}" class="btn btn-danger mt-3"><i class="fas fa-trash"></i> 刪除並返回</a>
     </div>
 </body>
 </html>
