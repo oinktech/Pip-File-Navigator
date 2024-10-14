@@ -31,7 +31,7 @@
         <ul class="list-group">
             {% for file in extracted_files %}
             <li class="list-group-item">
-                <a href="/file?url={{ url_for('cleanup') }}&filename={{ file }}">{{ file }}</a>
+                <a href="{{ url_for('extracted_file', filename=file) }}">{{ file }}</a>
             </li>
             {% endfor %}
         </ul>
