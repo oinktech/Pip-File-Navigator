@@ -1,22 +1,16 @@
 import os
 import requests
 import tarfile
-import tempfile
-import shutil
-import logging
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
 PYPI_BASE_URL = "https://pypi.org/pypi/{}/json"
-TEMP_DIR = tempfile.mkdtemp()
+TEMP_DIR = "temp_files"  # 存儲解壓縮的檔案
 
-# 日誌設置
-logging.basicConfig(level=logging.INFO)
-logging.info(f"Temporary directory created at: {TEMP_DIR}")
-
-# 存放解壓縮後文件的全局變數
-extracted_dirs = {}
+# 確保臨時目錄存在，若不存在則自動創建
+if not os.path.exists(TEMP_DIR):
+    os.makedirs(TEMP_DIR)
 
 # 首頁
 @app.route('/', methods=['GET', 'POST'])
@@ -46,60 +40,44 @@ def index():
 def view_file():
     file_url = request.args.get('url')
     file_name = request.args.get('filename')
-    
+
     if file_url:
         try:
-            response = requests.get(file_url, stream=True)
+            response = requests.get(file_url)
             if response.status_code == 200:
-                file_ext = file_name.split('.')[-1].lower()
-                temp_file_path = os.path.join(TEMP_DIR, file_name)
-                
-                # 儲存檔案到臨時文件夾
-                with open(temp_file_path, 'wb') as temp_file:
-                    for chunk in response.iter_content(chunk_size=128):
-                        temp_file.write(chunk)
+                # 如果是 tar.gz 檔案，進行解壓縮
+                if file_name.endswith('.tar.gz'):
+                    file_path = os.path.join(TEMP_DIR, file_name)
+                    with open(file_path, 'wb') as f:
+                        f.write(response.content)
+                    
+                    # 解壓縮檔案
+                    extracted_files = []
+                    with tarfile.open(file_path, 'r:gz') as tar:
+                        tar.extractall(path=TEMP_DIR)
+                        extracted_files = tar.getnames()
 
-                # 如果是 tar.gz 文件，解壓縮後顯示內容
-                if file_ext == 'gz' and file_name.endswith('.tar.gz'):
-                    extracted_dir = os.path.join(TEMP_DIR, file_name.split('.')[0])
-                    with tarfile.open(temp_file_path, 'r:gz') as tar_ref:
-                        tar_ref.extractall(extracted_dir)
-
-                    # 記錄解壓縮的目錄，以便後續刪除
-                    extracted_dirs[file_name] = extracted_dir
-
-                    # 列出解壓縮後的文件
-                    extracted_files = os.listdir(extracted_dir)
-                    return render_template('extracted_files.html', files=extracted_files, dir=extracted_dir, module_name=file_name)
-
-                # 如果是普通文件，直接顯示內容
-                with open(temp_file_path, 'r') as file:
-                    content = file.read()
+                    return render_template('tar_view.html', extracted_files=extracted_files)
+                else:
+                    content = response.text
                     return render_template('file_view.html', content=content, file_name=file_name)
-            
             else:
                 return render_template('error.html', error="無法讀取檔案內容")
         except Exception as e:
             return render_template('error.html', error=f"無法讀取檔案：{str(e)}")
-    
     return redirect(url_for('index'))
 
-# 刪除解壓縮後的文件
-@app.route('/delete')
-def delete_temp_files():
-    # 刪除所有記錄的解壓縮目錄
-    for directory in extracted_dirs.values():
-        if os.path.exists(directory):
-            shutil.rmtree(directory)
-    extracted_dirs.clear()  # 清空記錄
-    return redirect(url_for('index'))
-
-# 下載解壓縮後的文件
-@app.route('/download/<path:filename>')
-def download_file(filename):
-    # 打印當前TEMP_DIR中的文件
-    logging.info(f"Attempting to download {filename} from {TEMP_DIR}")
-    return send_from_directory(directory=TEMP_DIR, path=filename, as_attachment=True)
+# 刪除臨時檔案
+@app.route('/cleanup')
+def cleanup():
+    try:
+        for filename in os.listdir(TEMP_DIR):
+            file_path = os.path.join(TEMP_DIR, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        return redirect(url_for('index'))
+    except Exception as e:
+        return render_template('error.html', error=f"無法清除檔案：{str(e)}")
 
 # 錯誤處理 404
 @app.errorhandler(404)
@@ -112,4 +90,4 @@ def internal_error(error):
     return render_template('error.html', error="500: 伺服器內部錯誤"), 500
 
 if __name__ == '__main__':
-    app.run(debug=True,port=10000, host='0.0.0.0')
+    app.run(debug=True,host='0.0.0.0',port=10000)
