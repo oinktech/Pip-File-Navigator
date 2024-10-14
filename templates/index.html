@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pip 模組探索器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .main-container {
+            margin-top: 50px;
+        }
+        .search-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        .spinner-border {
+            display: none;
+        }
+        .loading {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 search-box">
+                <h2 class="text-center mb-4"><i class="fa fa-search"></i> 搜尋 Pip 模組</h2>
+                <form id="module-form" method="POST" action="/">
+                    <div class="input-group mb-3">
+                        <input type="text" name="module_name" class="form-control" placeholder="輸入模組名稱" required>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> 搜尋
+                        </button>
+                    </div>
+                    <div id="loading-spinner" class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">載入中...</span>
+                    </div>
+                </form>
+                {% if error %}
+                    <div class="alert alert-danger mt-3">{{ error }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('module-form').addEventListener('submit', function() {
+            document.getElementById('loading-spinner').classList.add('loading');
+        });
+    </script>
+</body>
+</html>
