@@ -14,6 +14,9 @@ TEMP_DIR = tempfile.mkdtemp()
 if not os.path.exists(TEMP_DIR):
     os.makedirs(TEMP_DIR)
 
+# 存放解壓縮後文件的全局變數
+extracted_dirs = {}
+
 # 首頁
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -61,6 +64,9 @@ def view_file():
                     with tarfile.open(temp_file_path, 'r:gz') as tar_ref:
                         tar_ref.extractall(extracted_dir)
 
+                    # 記錄解壓縮的目錄，以便後續刪除
+                    extracted_dirs[file_name] = extracted_dir
+
                     # 列出解壓縮後的文件
                     extracted_files = os.listdir(extracted_dir)
                     return render_template('extracted_files.html', files=extracted_files, dir=extracted_dir, module_name=file_name)
@@ -77,19 +83,20 @@ def view_file():
     
     return redirect(url_for('index'))
 
+# 刪除解壓縮後的文件
+@app.route('/delete')
+def delete_temp_files():
+    # 刪除所有記錄的解壓縮目錄
+    for directory in extracted_dirs.values():
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
+    extracted_dirs.clear()  # 清空記錄
+    return redirect(url_for('index'))
+
 # 下載解壓縮後的文件
 @app.route('/download/<path:filename>')
 def download_file(filename):
     return send_from_directory(directory=TEMP_DIR, path=filename, as_attachment=True)
-
-# 刪除臨時檔案
-@app.route('/delete/<path:directory>')
-def delete_temp_files(directory):
-    # 刪除目錄
-    full_path = os.path.join(TEMP_DIR, directory)
-    if os.path.exists(full_path):
-        shutil.rmtree(full_path)
-    return redirect(url_for('index'))
 
 # 錯誤處理 404
 @app.errorhandler(404)
@@ -102,4 +109,4 @@ def internal_error(error):
     return render_template('error.html', error="500: 伺服器內部錯誤"), 500
 
 if __name__ == '__main__':
-    app.run(debug=True,port=10000, host='0.0.0.0')
+    app.run(debug=True,host='0.0.0.0',port=10000)
