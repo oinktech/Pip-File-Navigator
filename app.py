@@ -3,6 +3,7 @@ import requests
 import tarfile
 import tempfile
 import shutil
+import logging
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 
 app = Flask(__name__)
@@ -10,9 +11,9 @@ app = Flask(__name__)
 PYPI_BASE_URL = "https://pypi.org/pypi/{}/json"
 TEMP_DIR = tempfile.mkdtemp()
 
-# 檢查並創建臨時文件夾
-if not os.path.exists(TEMP_DIR):
-    os.makedirs(TEMP_DIR)
+# 日誌設置
+logging.basicConfig(level=logging.INFO)
+logging.info(f"Temporary directory created at: {TEMP_DIR}")
 
 # 存放解壓縮後文件的全局變數
 extracted_dirs = {}
@@ -96,6 +97,8 @@ def delete_temp_files():
 # 下載解壓縮後的文件
 @app.route('/download/<path:filename>')
 def download_file(filename):
+    # 打印當前TEMP_DIR中的文件
+    logging.info(f"Attempting to download {filename} from {TEMP_DIR}")
     return send_from_directory(directory=TEMP_DIR, path=filename, as_attachment=True)
 
 # 錯誤處理 404
@@ -109,4 +112,4 @@ def internal_error(error):
     return render_template('error.html', error="500: 伺服器內部錯誤"), 500
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0',port=10000)
+    app.run(debug=True,port=10000, host='0.0.0.0')
