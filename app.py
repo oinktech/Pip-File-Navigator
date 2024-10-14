@@ -90,4 +90,4 @@ def internal_error(error):
     return render_template('error.html', error="500: 伺服器內部錯誤"), 500
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0',port=10000)
+    app.run(debug=True,port=10000, host='0.0.0.0')
