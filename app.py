@@ -57,12 +57,28 @@ def view_file():
                         tar.extractall(path=TEMP_DIR)
                         extracted_files = tar.getnames()
 
+                    # 返回檔案列表以供用戶選擇
                     return render_template('tar_view.html', extracted_files=extracted_files)
                 else:
                     content = response.text
                     return render_template('file_view.html', content=content, file_name=file_name)
             else:
                 return render_template('error.html', error="無法讀取檔案內容")
+        except Exception as e:
+            return render_template('error.html', error=f"無法讀取檔案：{str(e)}")
+    return redirect(url_for('index'))
+
+# 顯示解壓縮後檔案的內容
+@app.route('/extracted_file')
+def extracted_file():
+    file_name = request.args.get('filename')
+    file_path = os.path.join(TEMP_DIR, file_name)
+
+    if os.path.isfile(file_path):
+        try:
+            with open(file_path, 'r') as f:
+                content = f.read()
+            return render_template('file_view.html', content=content, file_name=file_name)
         except Exception as e:
             return render_template('error.html', error=f"無法讀取檔案：{str(e)}")
     return redirect(url_for('index'))
@@ -90,4 +106,4 @@ def internal_error(error):
     return render_template('error.html', error="500: 伺服器內部錯誤"), 500
 
 if __name__ == '__main__':
-    app.run(debug=True,port=10000, host='0.0.0.0')
+    app.run(debug=True,host='0.0.0.0',port=10000)
