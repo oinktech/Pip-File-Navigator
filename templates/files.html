@@ -31,8 +31,8 @@
         <h2 class="text-center"><i class="fa fa-folder"></i> {{ module_name }} 的檔案</h2>
         <div class="file-list list-group">
             {% for file in files %}
-            <a href="/file?path={{ file }}" class="list-group-item list-group-item-action file-item">
-                <i class="fa fa-file-code"></i> {{ file.split('/')[-1] }}
+            <a href="/file?url={{ file.url }}&filename={{ file.filename }}" class="list-group-item list-group-item-action file-item">
+                <i class="fa fa-file-code"></i> {{ file.filename }}
             </a>
             {% endfor %}
         </div>
