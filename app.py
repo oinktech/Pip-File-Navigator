@@ -1,6 +1,6 @@
 import os
 import requests
-import zipfile
+import tarfile
 import tempfile
 import shutil
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory
@@ -55,11 +55,11 @@ def view_file():
                     for chunk in response.iter_content(chunk_size=128):
                         temp_file.write(chunk)
 
-                # 如果是 zip 文件，解壓縮後顯示內容
-                if file_ext == 'zip':
+                # 如果是 tar.gz 文件，解壓縮後顯示內容
+                if file_ext == 'gz' and file_name.endswith('.tar.gz'):
                     extracted_dir = os.path.join(TEMP_DIR, file_name.split('.')[0])
-                    with zipfile.ZipFile(temp_file_path, 'r') as zip_ref:
-                        zip_ref.extractall(extracted_dir)
+                    with tarfile.open(temp_file_path, 'r:gz') as tar_ref:
+                        tar_ref.extractall(extracted_dir)
 
                     # 列出解壓縮後的文件
                     extracted_files = os.listdir(extracted_dir)
@@ -102,4 +102,4 @@ def internal_error(error):
     return render_template('error.html', error="500: 伺服器內部錯誤"), 500
 
 if __name__ == '__main__':
-    app.run(debug=True,port=10000,host='0.0.0.0')
+    app.run(debug=True,port=10000, host='0.0.0.0')
